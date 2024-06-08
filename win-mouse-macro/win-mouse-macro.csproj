@@ -98,6 +98,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="models\ClickRecord.cs" />
+    <Compile Include="models\MouseHook.cs" />
+    <Compile Include="models\MouseOperations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
