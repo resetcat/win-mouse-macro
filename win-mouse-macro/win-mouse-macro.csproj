@@ -139,5 +139,14 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="resources\record.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="resources\play.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="resources\reset.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

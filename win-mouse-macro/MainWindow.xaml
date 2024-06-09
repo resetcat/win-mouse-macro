@@ -8,9 +8,32 @@
         Title="MainWindow" Height="333" Width="532"
         Focusable="True" Background="White">
     <Grid>
-        <Button x:Name="btnRecord" Content="Record" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="BtnRecord_Click"/>
-        <Button x:Name="btnPlay" Content="Play" HorizontalAlignment="Left" Margin="112,10,0,0" VerticalAlignment="Top" Width="75" Click="BtnPlay_Click"/>
-        <Button x:Name="btnReset" Content="Reset" HorizontalAlignment="Left" Margin="214,10,0,0" VerticalAlignment="Top" Width="75" Click="BtnReset_Click"/>
+        <Button  x:Name="btnRecord" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnRecord_Click" >
+            <StackPanel Orientation="Horizontal" >
+                <Image x:Name="imgRecord" Source="pack://application:,,,/Resources/record.png" Width="20" Height="20"/>
+                <TextBlock Text="Record" Margin="5,0,0,0" />
+            </StackPanel>
+        </Button>
+        <Button x:Name="btnPlay" HorizontalAlignment="Left" Margin="112,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnPlay_Click">
+            <StackPanel Orientation="Horizontal">
+                <Image x:Name="imgPlay" Source="pack://application:,,,/Resources/play.png" Width="20" Height="20"/>
+                <TextBlock Text="Play" Margin="5,0,0,0"/>
+            </StackPanel>
+        </Button>
+        <Button x:Name="btnReset" HorizontalAlignment="Left" Margin="214,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnReset_Click">
+            <StackPanel Orientation="Horizontal">
+                <Image x:Name="imgReset" Source="pack://application:,,,/Resources/reset.png" Width="20" Height="20"/>
+                <TextBlock Text="Reset" Margin="5,0,0,0"/>
+            </StackPanel>
+        </Button>
+
+        <!-- Loop Delay Input -->
+        <TextBox x:Name="txtLoopDelay" HorizontalAlignment="Left" Margin="424,2,0,0" VerticalAlignment="Top" Width="60" Text="1000"/>
+        <TextBlock Text="Loop Delay (ms)" HorizontalAlignment="Left" Margin="424,22,0,0" VerticalAlignment="Top"/>
+
+        <CheckBox x:Name="chkRepeatForever" Content="Loop" HorizontalAlignment="Left" Margin="326,13,0,0" VerticalAlignment="Top"/>
+
         <ListBox x:Name="lstRecords" HorizontalAlignment="Left" Height="250" Margin="10,45,0,0" VerticalAlignment="Top" Width="500"/>
+
     </Grid>
 </Window>

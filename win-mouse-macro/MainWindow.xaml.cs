@@ -42,25 +42,38 @@ namespace win_mouse_macro {
                 clickRecords.Clear();
                 isRecording = true;
                 lstRecords.Items.Add("Recording started...");
+                lstRecords.Items.Add(" loop delay" + txtLoopDelay.Text);
+                lstRecords.Items.Add(" checkbox" + chkRepeatForever.IsChecked);
             } else {
                 isRecording = false;
                 if (lstRecords.Items.Count > 0) {
                     lstRecords.Items.RemoveAt(lstRecords.Items.Count - 1);
+                    clickRecords.RemoveAt(clickRecords.Count - 1);
                 }
                 lstRecords.Items.Add("Recording stopped.");
             }
         }
 
         private async void BtnPlay_Click(object sender, RoutedEventArgs e) {
-            lstRecords.Items.Add("Playing back actions...");
 
+            if (isRecording) {
+                lstRecords.Items.Add("Playback blocked: Recording is active.");
+                clickRecords.RemoveAt(clickRecords.Count - 1);
+                return;
+            }
+            lstRecords.Items.Add("Playing back actions...");
+            await PlayActions();
+
+        }
+
+        private async Task PlayActions(int delay = 500) {
             foreach (var record in new List<ClickRecord>(clickRecords)) {
                 MouseOperations.MouseEventFlags flags = record.Button == "Right" ?
                     MouseOperations.MouseEventFlags.RIGHTDOWN | MouseOperations.MouseEventFlags.RIGHTUP :
                     MouseOperations.MouseEventFlags.LEFTDOWN | MouseOperations.MouseEventFlags.LEFTUP;
 
                 MouseOperations.MouseEvent(flags, record.X, record.Y);
-                await Task.Delay(200); // Using async-await to delay without blocking the UI thread
+                await Task.Delay(500);
             }
         }
 
@@ -74,6 +87,14 @@ namespace win_mouse_macro {
         protected override void OnClosed(EventArgs e) {
             MouseHook.ReleaseHook();
             base.OnClosed(e);
+        }
+
+        private void BtnIncrease_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void BtnDecrease_Click(object sender, RoutedEventArgs e) {
+
         }
     }
 
