@@ -115,9 +115,5 @@ namespace win_mouse_macro {
                 BtnReset_Click(this, new RoutedEventArgs());
             }
         }
-
-
     }
-
-
 }

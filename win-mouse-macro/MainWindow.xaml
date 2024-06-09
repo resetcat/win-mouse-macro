@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:win_mouse_macro"
         mc:Ignorable="d"
         Title="MainWindow" Height="333" Width="532"
+        Icon="Resources/mouse.ico" 
         Focusable="True" Background="White"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
