@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using win_mouse_macro.models;
 
@@ -41,11 +42,12 @@ namespace win_mouse_macro {
                 lstRecords.Items.Clear();
                 clickRecords.Clear();
                 isRecording = true;
+                ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Recording...";
+
                 lstRecords.Items.Add("Recording started...");
-                lstRecords.Items.Add(" loop delay" + txtLoopDelay.Text);
-                lstRecords.Items.Add(" checkbox" + chkRepeatForever.IsChecked);
             } else {
                 isRecording = false;
+                ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Record (F5)";
                 if (lstRecords.Items.Count > 0) {
                     lstRecords.Items.RemoveAt(lstRecords.Items.Count - 1);
                     clickRecords.RemoveAt(clickRecords.Count - 1);
@@ -55,14 +57,26 @@ namespace win_mouse_macro {
         }
 
         private async void BtnPlay_Click(object sender, RoutedEventArgs e) {
-
             if (isRecording) {
                 lstRecords.Items.Add("Playback blocked: Recording is active.");
                 clickRecords.RemoveAt(clickRecords.Count - 1);
                 return;
             }
+
+            int delay;
+            if (!int.TryParse(txtLoopDelay.Text, out delay) || delay < 0) {
+                lstRecords.Items.Add("Invalid loop delay. Please enter a positive number.");
+                return;
+            }
+
             lstRecords.Items.Add("Playing back actions...");
-            await PlayActions();
+            if (chkRepeatForever.IsChecked == true) {
+                while (chkRepeatForever.IsChecked == true) {
+                    await PlayActions(delay);
+                }
+            } else {
+                await PlayActions(delay);
+            }
 
         }
 
@@ -75,6 +89,7 @@ namespace win_mouse_macro {
                 MouseOperations.MouseEvent(flags, record.X, record.Y);
                 await Task.Delay(500);
             }
+            await Task.Delay(delay);
         }
 
 
@@ -82,6 +97,8 @@ namespace win_mouse_macro {
             lstRecords.Items.Clear();
             clickRecords.Clear();
             isRecording = false;
+            chkRepeatForever.IsChecked = false;
+            lstRecords.Items.Add("Reset completed.");
         }
 
         protected override void OnClosed(EventArgs e) {
@@ -89,13 +106,17 @@ namespace win_mouse_macro {
             base.OnClosed(e);
         }
 
-        private void BtnIncrease_Click(object sender, RoutedEventArgs e) {
-
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.F5) {
+                BtnRecord_Click(this, new RoutedEventArgs());
+            } else if (e.Key == Key.F6) {
+                BtnPlay_Click(this, new RoutedEventArgs());
+            } else if (e.Key == Key.F8) {
+                BtnReset_Click(this, new RoutedEventArgs());
+            }
         }
 
-        private void BtnDecrease_Click(object sender, RoutedEventArgs e) {
 
-        }
     }
 
 

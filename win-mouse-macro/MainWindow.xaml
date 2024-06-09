@@ -6,24 +6,25 @@
         xmlns:local="clr-namespace:win_mouse_macro"
         mc:Ignorable="d"
         Title="MainWindow" Height="333" Width="532"
-        Focusable="True" Background="White">
+        Focusable="True" Background="White"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Button  x:Name="btnRecord" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnRecord_Click" >
             <StackPanel Orientation="Horizontal" >
                 <Image x:Name="imgRecord" Source="pack://application:,,,/Resources/record.png" Width="20" Height="20"/>
-                <TextBlock Text="Record" Margin="5,0,0,0" />
+                <TextBlock Text="Record (F5)" Margin="5,0,0,0" />
             </StackPanel>
         </Button>
         <Button x:Name="btnPlay" HorizontalAlignment="Left" Margin="112,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnPlay_Click">
             <StackPanel Orientation="Horizontal">
                 <Image x:Name="imgPlay" Source="pack://application:,,,/Resources/play.png" Width="20" Height="20"/>
-                <TextBlock Text="Play" Margin="5,0,0,0"/>
+                <TextBlock Text="Play (F6)" Margin="5,0,0,0"/>
             </StackPanel>
         </Button>
         <Button x:Name="btnReset" HorizontalAlignment="Left" Margin="214,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnReset_Click">
             <StackPanel Orientation="Horizontal">
                 <Image x:Name="imgReset" Source="pack://application:,,,/Resources/reset.png" Width="20" Height="20"/>
-                <TextBlock Text="Reset" Margin="5,0,0,0"/>
+                <TextBlock Text="Reset (F8)" Margin="5,0,0,0"/>
             </StackPanel>
         </Button>
 
