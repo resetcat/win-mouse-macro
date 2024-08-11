@@ -8,7 +8,7 @@
 - delay
 
 ## Installation Instructions
-- Download the `win-mouse-macro.zip` file from https://github.com/resetcat/win-mouse-macro/releases/tag/publish
+- Download the `win-mouse-macro.zip` file from https://github.com/resetcat/win-mouse-macro/releases/
 - Extract the contents to a desired location.
 - Run `setup` to start the application.
 
