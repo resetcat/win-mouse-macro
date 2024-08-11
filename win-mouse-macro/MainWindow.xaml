@@ -35,7 +35,10 @@
 
         <CheckBox x:Name="chkRepeatForever" Content="Loop" HorizontalAlignment="Left" Margin="326,13,0,0" VerticalAlignment="Top"/>
 
-        <ListBox x:Name="lstRecords" HorizontalAlignment="Left" Height="250" Margin="10,45,0,0" VerticalAlignment="Top" Width="500"/>
-
+        <!-- ListBox with auto-scrolling enabled -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" Margin="10,45,0,0" VerticalAlignment="Top" Height="250" Width="500">
+            <ListBox x:Name="lstRecords" />
+        </ScrollViewer>
+        
     </Grid>
 </Window>

@@ -13,6 +13,8 @@ namespace win_mouse_macro {
 
         public List<ClickRecord> clickRecords = new List<ClickRecord>();
         public bool isRecording = false;
+        public bool isPlaying = false;
+        private int loopCounter = 0;
 
         public MainWindow() {
             InitializeComponent();
@@ -45,6 +47,7 @@ namespace win_mouse_macro {
                 ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Recording...";
 
                 lstRecords.Items.Add("Recording started...");
+                lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
             } else {
                 isRecording = false;
                 ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Record (F5)";
@@ -53,35 +56,60 @@ namespace win_mouse_macro {
                     clickRecords.RemoveAt(clickRecords.Count - 1);
                 }
                 lstRecords.Items.Add("Recording stopped.");
+                lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
             }
         }
 
+
         private async void BtnPlay_Click(object sender, RoutedEventArgs e) {
+            if (isPlaying) {
+                isPlaying = false;
+                ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Play (F6)";
+                lstRecords.Items.Add("Playback stopped.");
+                lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
+                return;
+            }
+
             if (isRecording) {
                 lstRecords.Items.Add("Playback blocked: Recording is active.");
                 clickRecords.RemoveAt(clickRecords.Count - 1);
+                lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
                 return;
             }
 
             int delay;
             if (!int.TryParse(txtLoopDelay.Text, out delay) || delay < 0) {
                 lstRecords.Items.Add("Invalid loop delay. Please enter a positive number.");
+                lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
                 return;
             }
 
+            isPlaying = true;
+            loopCounter = 0;
+            ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Stop (F6)";
             lstRecords.Items.Add("Playing back actions...");
+            lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
             if (chkRepeatForever.IsChecked == true) {
-                while (chkRepeatForever.IsChecked == true) {
+                while (chkRepeatForever.IsChecked == true && isPlaying) {
                     await PlayActions(delay);
+                    loopCounter++;
+                    lstRecords.Items.Add($"Loop count: {loopCounter}");
+                    lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
                 }
             } else {
                 await PlayActions(delay);
             }
 
+            isPlaying = false;
+            ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Play (F6)";
+            lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
         }
+
 
         private async Task PlayActions(int delay = 500) {
             foreach (var record in new List<ClickRecord>(clickRecords)) {
+                if (!isPlaying) return; // Stop playback if isPlaying is set to false
+
                 MouseOperations.MouseEventFlags flags = record.Button == "Right" ?
                     MouseOperations.MouseEventFlags.RIGHTDOWN | MouseOperations.MouseEventFlags.RIGHTUP :
                     MouseOperations.MouseEventFlags.LEFTDOWN | MouseOperations.MouseEventFlags.LEFTUP;
@@ -97,9 +125,14 @@ namespace win_mouse_macro {
             lstRecords.Items.Clear();
             clickRecords.Clear();
             isRecording = false;
+            isPlaying = false;
+            loopCounter = 0;
             chkRepeatForever.IsChecked = false;
+            ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Play (F6)";
             lstRecords.Items.Add("Reset completed.");
+            lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
         }
+
 
         protected override void OnClosed(EventArgs e) {
             MouseHook.ReleaseHook();
