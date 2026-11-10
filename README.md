@@ -11,7 +11,7 @@
 ## Installation Instructions
 - Download the `win-mouse-macro.zip` file from https://github.com/resetcat/win-mouse-macro/releases/
 - Extract the contents to a desired location.
-- Run `setup` to start the application.
+- Run `win-mouse-macro.exe` to start the application.
 
 ## Run the source locally in VS Code
 
@@ -48,12 +48,8 @@ dotnet build win-mouse-macro\win-mouse-macro.csproj -c Release
 Compress-Archive -Force -DestinationPath win-mouse-macro\bin\Release\win-mouse-macro.zip -Path win-mouse-macro\bin\Release\net472\win-mouse-macro.exe, win-mouse-macro\bin\Release\net472\win-mouse-macro.exe.config
 ```
 
-Then:
-
-- Upload `win-mouse-macro\bin\Release\win-mouse-macro.zip` as a new release at
-  https://github.com/resetcat/win-mouse-macro/releases/
-- For the first zip release only: change the last step of the Installation
-  Instructions above from "Run `setup`" to "Run `win-mouse-macro.exe`".
+Then upload `win-mouse-macro\bin\Release\win-mouse-macro.zip` as a new release at
+https://github.com/resetcat/win-mouse-macro/releases/
 
 ## System Requirements
 - Windows 10 or newer recommended.
