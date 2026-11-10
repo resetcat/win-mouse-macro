@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 
 namespace win_mouse_macro.models {
     public class MouseHook {
@@ -21,24 +22,28 @@ namespace win_mouse_macro.models {
         private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) {
             if (nCode >= 0) {
                 MouseMessages message = (MouseMessages)wParam;
-                if ((message == MouseMessages.WM_LBUTTONDOWN || message == MouseMessages.WM_RBUTTONDOWN)) {
+                bool isButtonDown = message == MouseMessages.WM_LBUTTONDOWN || message == MouseMessages.WM_RBUTTONDOWN;
+                bool isButtonUp = message == MouseMessages.WM_LBUTTONUP || message == MouseMessages.WM_RBUTTONUP;
+                if (isButtonDown || isButtonUp) {
                     MSLLHOOKSTRUCT hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                    bool isLeftButton = message == MouseMessages.WM_LBUTTONDOWN || message == MouseMessages.WM_LBUTTONUP;
+                    MouseButton button = isLeftButton ? MouseButton.Left : MouseButton.Right;
 
-                    // Only log and update if recording is active
-                    Application.Current.Dispatcher.Invoke(() => {
-                        var mainWindow = (MainWindow)Application.Current.MainWindow;
-                        if (mainWindow.isRecording) {
-                            Console.WriteLine($"Mouse clicked at {hookStruct.pt.x}, {hookStruct.pt.y}");
-                            var button = message == MouseMessages.WM_LBUTTONDOWN ? "Left" : "Right";
-                            ClickRecord record = new ClickRecord {
-                                Button = button,
-                                X = hookStruct.pt.x,
-                                Y = hookStruct.pt.y
-                            };
-                            mainWindow.clickRecords.Add(record);
-                            mainWindow.lstRecords.Items.Add(record);
+                    if (isButtonDown) {
+                        InputRecorder.MouseDown(button, hookStruct.pt.x, hookStruct.pt.y);
+                    } else {
+                        // A click or drag is only known once the button is released.
+                        MacroRecord record = InputRecorder.MouseUp(button, hookStruct.pt.x, hookStruct.pt.y);
+                        if (record != null) {
+                            // Only log and update if recording is active
+                            Application.Current.Dispatcher.Invoke(() => {
+                                var mainWindow = (MainWindow)Application.Current.MainWindow;
+                                if (mainWindow.isRecording) {
+                                    mainWindow.AddRecord(record);
+                                }
+                            });
                         }
-                    });
+                    }
                 }
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);

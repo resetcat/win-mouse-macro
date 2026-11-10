@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,22 +13,27 @@ namespace win_mouse_macro {
 
     public partial class MainWindow : Window {
 
-        public List<ClickRecord> clickRecords = new List<ClickRecord>();
+        // Pause after each played-back action, before timing jitter is applied.
+        private const int ActionDelayMs = 500;
+
+        public List<MacroRecord> records = new List<MacroRecord>();
         public bool isRecording = false;
         public bool isPlaying = false;
         private int loopCounter = 0;
+        private CancellationTokenSource playbackCancellation;
 
         public MainWindow() {
             InitializeComponent();
             Application.Current.MainWindow = this;
             MouseHook.SetHook();
+            KeyboardHook.SetHook();
         }
 
         private void MainWindow_MouseDown(object sender, MouseButtonEventArgs e) {
             if (!isRecording) return;
 
             var position = e.GetPosition(this);
-            var button = e.ChangedButton.ToString();
+            var button = e.ChangedButton;
 
             ClickRecord record = new ClickRecord {
                 Button = button,
@@ -34,7 +41,11 @@ namespace win_mouse_macro {
                 Y = (int)position.Y
             };
 
-            clickRecords.Add(record);
+            AddRecord(record);
+        }
+
+        public void AddRecord(MacroRecord record) {
+            records.Add(record);
             lstRecords.Items.Add(record);
         }
 
@@ -42,7 +53,7 @@ namespace win_mouse_macro {
         private void BtnRecord_Click(object sender, RoutedEventArgs e) {
             if (!isRecording) {
                 lstRecords.Items.Clear();
-                clickRecords.Clear();
+                records.Clear();
                 isRecording = true;
                 ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Recording...";
 
@@ -51,9 +62,9 @@ namespace win_mouse_macro {
             } else {
                 isRecording = false;
                 ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Record (F5)";
-                if (lstRecords.Items.Count > 0) {
+                if (records.Count > 0) {
                     lstRecords.Items.RemoveAt(lstRecords.Items.Count - 1);
-                    clickRecords.RemoveAt(clickRecords.Count - 1);
+                    records.RemoveAt(records.Count - 1);
                 }
                 lstRecords.Items.Add("Recording stopped.");
                 lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
@@ -63,8 +74,9 @@ namespace win_mouse_macro {
 
         private async void BtnPlay_Click(object sender, RoutedEventArgs e) {
             if (isPlaying) {
-                isPlaying = false;
-                ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Play (F6)";
+                // The running playback notices the cancellation, finishes the action it is in the middle of
+                // (so no button or key is left held down) and then resets the Play button itself.
+                playbackCancellation.Cancel();
                 lstRecords.Items.Add("Playback stopped.");
                 lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
                 return;
@@ -72,7 +84,9 @@ namespace win_mouse_macro {
 
             if (isRecording) {
                 lstRecords.Items.Add("Playback blocked: Recording is active.");
-                clickRecords.RemoveAt(clickRecords.Count - 1);
+                if (records.Count > 0) {
+                    records.RemoveAt(records.Count - 1);
+                }
                 lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
                 return;
             }
@@ -89,16 +103,25 @@ namespace win_mouse_macro {
             ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Stop (F6)";
             lstRecords.Items.Add("Playing back actions...");
             lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
+
+            var cancellation = new CancellationTokenSource();
+            playbackCancellation = cancellation;
             if (chkRepeatForever.IsChecked == true) {
-                while (chkRepeatForever.IsChecked == true && isPlaying) {
-                    await PlayActions(delay);
+                while (chkRepeatForever.IsChecked == true) {
+                    // Times the whole pass: every action plus the loop delay at its end.
+                    Stopwatch loopTimer = Stopwatch.StartNew();
+                    await PlayActions(delay, cancellation.Token);
+                    // A pass cut short by Stop or Reset is not a completed loop.
+                    if (cancellation.IsCancellationRequested) break;
                     loopCounter++;
-                    lstRecords.Items.Add($"Loop count: {loopCounter}");
+                    lstRecords.Items.Add($"Loop count: {loopCounter} (took {loopTimer.Elapsed.TotalSeconds:0.0} s)");
                     lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
                 }
             } else {
-                await PlayActions(delay);
+                await PlayActions(delay, cancellation.Token);
             }
+            playbackCancellation = null;
+            cancellation.Dispose();
 
             isPlaying = false;
             ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Play (F6)";
@@ -106,26 +129,23 @@ namespace win_mouse_macro {
         }
 
 
-        private async Task PlayActions(int delay = 500) {
-            foreach (var record in new List<ClickRecord>(clickRecords)) {
-                if (!isPlaying) return; // Stop playback if isPlaying is set to false
+        private async Task PlayActions(int delay, CancellationToken cancellation) {
+            foreach (var record in new List<MacroRecord>(records)) {
+                if (cancellation.IsCancellationRequested) return; // Stop playback once Stop or Reset was pressed
 
-                MouseOperations.MouseEventFlags flags = record.Button == "Right" ?
-                    MouseOperations.MouseEventFlags.RIGHTDOWN | MouseOperations.MouseEventFlags.RIGHTUP :
-                    MouseOperations.MouseEventFlags.LEFTDOWN | MouseOperations.MouseEventFlags.LEFTUP;
-
-                MouseOperations.MouseEvent(flags, record.X, record.Y);
-                await Task.Delay(500);
+                await record.PlayAsync();
+                await Humanizer.DelayAsync(ActionDelayMs, cancellation);
             }
-            await Task.Delay(delay);
+            await Humanizer.DelayAsync(delay, cancellation);
         }
 
 
         private void BtnReset_Click(object sender, RoutedEventArgs e) {
             lstRecords.Items.Clear();
-            clickRecords.Clear();
+            records.Clear();
             isRecording = false;
-            isPlaying = false;
+            // A running playback notices the cancellation and clears isPlaying itself once it has wound down.
+            playbackCancellation?.Cancel();
             loopCounter = 0;
             chkRepeatForever.IsChecked = false;
             ((TextBlock)((StackPanel)btnPlay.Content).Children[1]).Text = "Play (F6)";
@@ -136,6 +156,7 @@ namespace win_mouse_macro {
 
         protected override void OnClosed(EventArgs e) {
             MouseHook.ReleaseHook();
+            KeyboardHook.ReleaseHook();
             base.OnClosed(e);
         }
 

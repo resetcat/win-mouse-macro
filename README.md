@@ -1,8 +1,9 @@
 # Simple mouse macro for windows
 ![app pic](https://i.imgur.com/UUSORS7.png)
 ## Features
-- record mouse 
-- playback
+- record mouse clicks and drags
+- record keyboard keys and shortcuts
+- playback with human-like randomness (timing, click positions, cursor movement)
 - reset
 - loop
 - delay
