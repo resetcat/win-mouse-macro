@@ -1,0 +1,62 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run mouse macro",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/run.ps1"
+            ],
+            "linux": {
+                "command": "bash",
+                "args": [
+                    "-c",
+                    "exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"$(wslpath -w \"$1\")\"",
+                    "bash",
+                    "${workspaceFolder}/run.ps1"
+                ]
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Build mouse macro",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/run.ps1",
+                "-BuildOnly"
+            ],
+            "linux": {
+                "command": "bash",
+                "args": [
+                    "-c",
+                    "exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"$(wslpath -w \"$1\")\" -BuildOnly",
+                    "bash",
+                    "${workspaceFolder}/run.ps1"
+                ]
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}
