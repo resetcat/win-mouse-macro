@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.Win32;
 using win_mouse_macro.models;
 
 
@@ -16,11 +19,17 @@ namespace win_mouse_macro {
         // Pause after each played-back action, before timing jitter is applied.
         private const int ActionDelayMs = 500;
 
+        private const string AppName = "win-mouse-macro";
+        private const string FileDialogFilter = "Macro files (*.json)|*.json|All files (*.*)|*.*";
+        private const string DefaultFileName = "macro.json";
+
         public List<MacroRecord> records = new List<MacroRecord>();
         public bool isRecording = false;
         public bool isPlaying = false;
         private int loopCounter = 0;
         private CancellationTokenSource playbackCancellation;
+        // The file Save writes to; null until the macro has been opened from or saved to one.
+        private string currentFilePath;
 
         public MainWindow() {
             InitializeComponent();
@@ -54,6 +63,8 @@ namespace win_mouse_macro {
             if (!isRecording) {
                 lstRecords.Items.Clear();
                 records.Clear();
+                // A new recording is a new macro: Save must not quietly overwrite the file opened before.
+                SetCurrentFile(null);
                 isRecording = true;
                 ((TextBlock)((StackPanel)btnRecord.Content).Children[1]).Text = "Recording...";
 
@@ -143,6 +154,7 @@ namespace win_mouse_macro {
         private void BtnReset_Click(object sender, RoutedEventArgs e) {
             lstRecords.Items.Clear();
             records.Clear();
+            SetCurrentFile(null);
             isRecording = false;
             // A running playback notices the cancellation and clears isPlaying itself once it has wound down.
             playbackCancellation?.Cancel();
@@ -153,6 +165,125 @@ namespace win_mouse_macro {
             lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
         }
 
+
+        private void MenuOpen_Click(object sender, RoutedEventArgs e) {
+            if (RefuseWhileBusy()) return;
+
+            var dialog = new OpenFileDialog { Filter = FileDialogFilter };
+            if (dialog.ShowDialog(this) != true) return;
+
+            string fileName = Path.GetFileName(dialog.FileName);
+            Macro macro;
+            try {
+                macro = MacroStorage.Load(dialog.FileName);
+            } catch (Exception exception) when (exception is InvalidDataException || exception is IOException || exception is UnauthorizedAccessException) {
+                // Nothing has been changed yet, so the macro that was open stays as it is.
+                AddMessage($"Could not open {fileName}: {exception.Message}");
+                return;
+            }
+
+            lstRecords.Items.Clear();
+            records.Clear();
+            foreach (MacroRecord record in macro.Records) {
+                AddRecord(record);
+            }
+            chkRepeatForever.IsChecked = macro.Loop;
+            txtLoopDelay.Text = macro.LoopDelayMs.ToString();
+            SetCurrentFile(dialog.FileName);
+            AddMessage($"Opened {fileName} ({macro.Records.Count} actions).");
+        }
+
+        private void MenuSave_Click(object sender, RoutedEventArgs e) {
+            if (currentFilePath == null) {
+                MenuSaveAs_Click(sender, e);
+                return;
+            }
+
+            if (TryBuildMacro(out Macro macro)) {
+                SaveMacro(currentFilePath, macro);
+            }
+        }
+
+        private void MenuSaveAs_Click(object sender, RoutedEventArgs e) {
+            // Checked before asking for a name, so the dialog never opens for something that cannot be saved.
+            if (!TryBuildMacro(out Macro macro)) return;
+
+            var dialog = new SaveFileDialog {
+                Filter = FileDialogFilter,
+                DefaultExt = ".json",
+                FileName = currentFilePath == null ? DefaultFileName : Path.GetFileName(currentFilePath)
+            };
+            if (dialog.ShowDialog(this) == true) {
+                SaveMacro(dialog.FileName, macro);
+            }
+        }
+
+        private void MenuExit_Click(object sender, RoutedEventArgs e) {
+            Close();
+        }
+
+        private void MenuAbout_Click(object sender, RoutedEventArgs e) {
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
+            MessageBox.Show(
+                this,
+                $"{AppName}\nVersion {version.ToString(3)}\n\nRecords mouse and keyboard actions and plays them back.\n\nhttps://github.com/resetcat/win-mouse-macro",
+                $"About {AppName}",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        // Collects what Save writes. Says why in the list and returns false when there is nothing valid to save.
+        private bool TryBuildMacro(out Macro macro) {
+            macro = null;
+            if (RefuseWhileBusy()) return false;
+
+            if (records.Count == 0) {
+                AddMessage("Nothing to save.");
+                return false;
+            }
+
+            if (!int.TryParse(txtLoopDelay.Text, out int delay) || delay < 0) {
+                AddMessage("Invalid loop delay. Please enter a positive number.");
+                return false;
+            }
+
+            macro = new Macro {
+                Records = new List<MacroRecord>(records),
+                Loop = chkRepeatForever.IsChecked == true,
+                LoopDelayMs = delay
+            };
+            return true;
+        }
+
+        private void SaveMacro(string path, Macro macro) {
+            string fileName = Path.GetFileName(path);
+            try {
+                MacroStorage.Save(path, macro);
+            } catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException) {
+                AddMessage($"Could not save {fileName}: {exception.Message}");
+                return;
+            }
+
+            SetCurrentFile(path);
+            AddMessage($"Saved {fileName}.");
+        }
+
+        private bool RefuseWhileBusy() {
+            if (!isRecording && !isPlaying) return false;
+
+            AddMessage("Stop recording and playback first.");
+            return true;
+        }
+
+        private void SetCurrentFile(string path) {
+            currentFilePath = path;
+            Title = path == null ? AppName : $"{Path.GetFileName(path)} - {AppName}";
+        }
+
+        private void AddMessage(string message) {
+            lstRecords.Items.Add(message);
+            lstRecords.ScrollIntoView(lstRecords.Items[lstRecords.Items.Count - 1]);
+        }
 
         protected override void OnClosed(EventArgs e) {
             MouseHook.ReleaseHook();
@@ -167,6 +298,15 @@ namespace win_mouse_macro {
                 BtnPlay_Click(this, new RoutedEventArgs());
             } else if (e.Key == Key.F8) {
                 BtnReset_Click(this, new RoutedEventArgs());
+            } else if (e.Key == Key.O && Keyboard.Modifiers == ModifierKeys.Control) {
+                MenuOpen_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            } else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) {
+                MenuSave_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            } else if (e.Key == Key.S && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift)) {
+                MenuSaveAs_Click(this, new RoutedEventArgs());
+                e.Handled = true;
             }
         }
     }

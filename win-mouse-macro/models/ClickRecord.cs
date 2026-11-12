@@ -14,7 +14,7 @@ namespace win_mouse_macro.models {
         // How long the button stayed down while recording.
         public int HoldMs { get; set; }
 
-        private bool IsHold {
+        public bool IsHold {
             get { return HoldMs >= MinHoldMs; }
         }
 

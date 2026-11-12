@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
@@ -10,6 +11,11 @@ namespace win_mouse_macro.models {
         private const int KEYEVENTF_KEYUP = 0x0002;
         private const uint MAPVK_VK_TO_VSC = 0;
         private const int KeyDownBit = 0x8000;
+
+        // Keys that WPF has no name for are shown and saved as "VK <code>".
+        private const string UnnamedKeyPrefix = "VK ";
+        private const int MinVirtualKey = 1;
+        private const int MaxVirtualKey = 254;
 
         private const int VK_LWIN = 0x5B;
         private const int VK_RWIN = 0x5C;
@@ -68,10 +74,29 @@ namespace win_mouse_macro.models {
 
         public static string GetKeyName(int virtualKey) {
             Key key = KeyInterop.KeyFromVirtualKey(virtualKey);
-            return key == Key.None ? $"VK {virtualKey}" : key.ToString();
+            return key == Key.None ? $"{UnnamedKeyPrefix}{virtualKey}" : key.ToString();
         }
 
-        private static int GetScanCode(int virtualKey) {
+        // The reverse of GetKeyName, for names read from a saved macro.
+        public static bool TryParseKeyName(string name, out int virtualKey) {
+            virtualKey = 0;
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            if (name.StartsWith(UnnamedKeyPrefix, StringComparison.OrdinalIgnoreCase)) {
+                string number = name.Substring(UnnamedKeyPrefix.Length);
+                return int.TryParse(number, NumberStyles.None, CultureInfo.InvariantCulture, out virtualKey)
+                    && virtualKey >= MinVirtualKey && virtualKey <= MaxVirtualKey;
+            }
+
+            // Enum.TryParse also accepts bare numbers, which would be WPF key numbers rather than key names.
+            if (int.TryParse(name, out _)) return false;
+            if (!Enum.TryParse(name, ignoreCase: true, result: out Key key) || !Enum.IsDefined(typeof(Key), key)) return false;
+
+            virtualKey = KeyInterop.VirtualKeyFromKey(key);
+            return virtualKey != 0;
+        }
+
+        public static int GetScanCode(int virtualKey) {
             return (int)MapVirtualKey((uint)virtualKey, MAPVK_VK_TO_VSC);
         }
     }

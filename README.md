@@ -4,6 +4,7 @@
 - record mouse clicks, click-and-hold and drags
 - record keyboard keys and shortcuts
 - playback with human-like randomness (timing, click positions, cursor movement)
+- save and open macros as JSON files (File menu)
 - reset
 - loop
 - delay
@@ -34,14 +35,18 @@ assemblies through NuGet on the first build, so an internet connection is needed
 initially. Full Visual Studio is not required.
 
 Close the app before rebuilding changed code. The F5 (record), F6 (play/stop),
-and F8 (reset) shortcuts work while the app window has keyboard focus.
+F8 (reset), Ctrl+O (open), Ctrl+S (save) and Ctrl+Shift+S (save as) shortcuts
+work while the app window has keyboard focus.
 
 ## Publishing a new version
 
 Releases are a plain zip of the Release build. There is no `setup` installer
 anymore: building one requires Visual Studio, and the app runs fine without it.
 
-Run this from a PowerShell terminal in the project folder:
+First set the new version number in `win-mouse-macro\Properties\AssemblyInfo.cs`
+(both `AssemblyVersion` and `AssemblyFileVersion`). Help > About shows it.
+
+Then run this from a PowerShell terminal in the project folder:
 
 ```powershell
 dotnet build win-mouse-macro\win-mouse-macro.csproj -c Release

@@ -5,40 +5,54 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:win_mouse_macro"
         mc:Ignorable="d"
-        Title="MainWindow" Height="333" Width="532"
+        Title="win-mouse-macro" Height="353" Width="532"
         Icon="Resources/mouse.ico" 
         Focusable="True" Background="White"
         PreviewKeyDown="Window_PreviewKeyDown">
-    <Grid>
-        <Button  x:Name="btnRecord" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnRecord_Click" >
-            <StackPanel Orientation="Horizontal" >
-                <Image x:Name="imgRecord" Source="pack://application:,,,/Resources/record.png" Width="20" Height="20"/>
-                <TextBlock Text="Record (F5)" Margin="5,0,0,0" />
-            </StackPanel>
-        </Button>
-        <Button x:Name="btnPlay" HorizontalAlignment="Left" Margin="112,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnPlay_Click">
-            <StackPanel Orientation="Horizontal">
-                <Image x:Name="imgPlay" Source="pack://application:,,,/Resources/play.png" Width="20" Height="20"/>
-                <TextBlock Text="Play (F6)" Margin="5,0,0,0"/>
-            </StackPanel>
-        </Button>
-        <Button x:Name="btnReset" HorizontalAlignment="Left" Margin="214,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnReset_Click">
-            <StackPanel Orientation="Horizontal">
-                <Image x:Name="imgReset" Source="pack://application:,,,/Resources/reset.png" Width="20" Height="20"/>
-                <TextBlock Text="Reset (F8)" Margin="5,0,0,0"/>
-            </StackPanel>
-        </Button>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem x:Name="menuOpen" Header="_Open..." InputGestureText="Ctrl+O" Click="MenuOpen_Click"/>
+                <MenuItem x:Name="menuSave" Header="_Save" InputGestureText="Ctrl+S" Click="MenuSave_Click"/>
+                <MenuItem x:Name="menuSaveAs" Header="Save _As..." InputGestureText="Ctrl+Shift+S" Click="MenuSaveAs_Click"/>
+                <Separator/>
+                <MenuItem x:Name="menuExit" Header="E_xit" InputGestureText="Alt+F4" Click="MenuExit_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem x:Name="menuAbout" Header="_About" Click="MenuAbout_Click"/>
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <Button  x:Name="btnRecord" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnRecord_Click" >
+                <StackPanel Orientation="Horizontal" >
+                    <Image x:Name="imgRecord" Source="pack://application:,,,/Resources/record.png" Width="20" Height="20"/>
+                    <TextBlock Text="Record (F5)" Margin="5,0,0,0" />
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnPlay" HorizontalAlignment="Left" Margin="112,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnPlay_Click">
+                <StackPanel Orientation="Horizontal">
+                    <Image x:Name="imgPlay" Source="pack://application:,,,/Resources/play.png" Width="20" Height="20"/>
+                    <TextBlock Text="Play (F6)" Margin="5,0,0,0"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnReset" HorizontalAlignment="Left" Margin="214,10,0,0" VerticalAlignment="Top" Width="95" Click="BtnReset_Click">
+                <StackPanel Orientation="Horizontal">
+                    <Image x:Name="imgReset" Source="pack://application:,,,/Resources/reset.png" Width="20" Height="20"/>
+                    <TextBlock Text="Reset (F8)" Margin="5,0,0,0"/>
+                </StackPanel>
+            </Button>
 
-        <!-- Loop Delay Input -->
-        <TextBox x:Name="txtLoopDelay" HorizontalAlignment="Left" Margin="424,2,0,0" VerticalAlignment="Top" Width="60" Text="1000"/>
-        <TextBlock Text="Loop Delay (ms)" HorizontalAlignment="Left" Margin="424,22,0,0" VerticalAlignment="Top"/>
+            <!-- Loop Delay Input -->
+            <TextBox x:Name="txtLoopDelay" HorizontalAlignment="Left" Margin="424,2,0,0" VerticalAlignment="Top" Width="60" Text="1000"/>
+            <TextBlock Text="Loop Delay (ms)" HorizontalAlignment="Left" Margin="424,22,0,0" VerticalAlignment="Top"/>
 
-        <CheckBox x:Name="chkRepeatForever" Content="Loop" HorizontalAlignment="Left" Margin="326,13,0,0" VerticalAlignment="Top"/>
+            <CheckBox x:Name="chkRepeatForever" Content="Loop" HorizontalAlignment="Left" Margin="326,13,0,0" VerticalAlignment="Top"/>
 
-        <!-- ListBox with auto-scrolling enabled -->
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" Margin="10,45,0,0" VerticalAlignment="Top" Height="250" Width="500">
-            <ListBox x:Name="lstRecords" />
-        </ScrollViewer>
-        
-    </Grid>
+            <!-- ListBox with auto-scrolling enabled -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" Margin="10,45,0,0" VerticalAlignment="Top" Height="250" Width="500">
+                <ListBox x:Name="lstRecords" />
+            </ScrollViewer>
+
+        </Grid>
+    </DockPanel>
 </Window>
