@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace win_mouse_macro.models {
@@ -9,7 +10,7 @@ namespace win_mouse_macro.models {
         public int ToX { get; set; }
         public int ToY { get; set; }
 
-        protected override async Task PlayActionAsync() {
+        protected override async Task PlayActionAsync(CancellationToken cancellation) {
             // Both ends share one offset so the drag keeps its recorded length and direction.
             var offset = Humanizer.NextPositionOffset();
             await Humanizer.MoveCursorAsync(FromX + offset.X, FromY + offset.Y);

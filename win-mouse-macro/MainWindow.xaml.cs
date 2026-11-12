@@ -133,7 +133,7 @@ namespace win_mouse_macro {
             foreach (var record in new List<MacroRecord>(records)) {
                 if (cancellation.IsCancellationRequested) return; // Stop playback once Stop or Reset was pressed
 
-                await record.PlayAsync();
+                await record.PlayAsync(cancellation);
                 await Humanizer.DelayAsync(ActionDelayMs, cancellation);
             }
             await Humanizer.DelayAsync(delay, cancellation);

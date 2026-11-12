@@ -20,6 +20,10 @@ namespace win_mouse_macro.models {
         private const int HoldMinMs = 45;
         private const int HoldMaxMs = 130;
 
+        // A recorded long hold is replayed a little longer, never shorter: releasing early could change what it does.
+        private const double LongHoldSpread = 0.05;
+        private const double MaxLongHoldExtra = 0.2;
+
         private const double PositionSpreadPx = 1.5;
         private const int MaxPositionOffsetPx = 4;
 
@@ -52,6 +56,12 @@ namespace win_mouse_macro.models {
 
         public static Task HoldAsync() {
             return Task.Delay(_random.Next(HoldMinMs, HoldMaxMs + 1));
+        }
+
+        // Waits about as long as a button was held while recording. Returns early, without throwing, once cancelled.
+        // The cursor is left alone: moving it with the button down would turn the hold into a drag.
+        public static Task LongHoldAsync(int recordedMs, CancellationToken cancellation) {
+            return WaitAsync(LongHoldMs(recordedMs), cancellation);
         }
 
         public static (int X, int Y) NextPositionOffset() {
@@ -134,6 +144,11 @@ namespace win_mouse_macro.models {
                 delayMs += _random.Next(HesitationMinMs, HesitationMaxMs + 1);
             }
             return (int)Math.Min(delayMs, int.MaxValue);
+        }
+
+        private static int LongHoldMs(int recordedMs) {
+            double extra = Math.Min(Math.Abs(NextGaussian()) * LongHoldSpread, MaxLongHoldExtra);
+            return (int)Math.Min(recordedMs * (1 + extra), int.MaxValue);
         }
 
         private static double NextDelayFactor() {

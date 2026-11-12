@@ -1,7 +1,7 @@
 # Simple mouse macro for windows
 ![app pic](https://i.imgur.com/UUSORS7.png)
 ## Features
-- record mouse clicks and drags
+- record mouse clicks, click-and-hold and drags
 - record keyboard keys and shortcuts
 - playback with human-like randomness (timing, click positions, cursor movement)
 - reset

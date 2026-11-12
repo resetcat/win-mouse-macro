@@ -6,28 +6,35 @@ using System.Windows.Input;
 namespace win_mouse_macro.models {
     // Turns the raw button and key events from the hooks into macro records.
     public static class InputRecorder {
-        private static readonly Dictionary<MouseButton, ClickRecord> _pendingClicks = new Dictionary<MouseButton, ClickRecord>();
+        private static readonly Dictionary<MouseButton, (ClickRecord Click, uint TimeMs)> _pendingPresses =
+            new Dictionary<MouseButton, (ClickRecord Click, uint TimeMs)>();
         private static bool _modifierTapPending;
 
-        public static void MouseDown(MouseButton button, int x, int y) {
+        public static void MouseDown(MouseButton button, int x, int y, uint timeMs) {
             // Clicking while a modifier is held uses it, so releasing it afterwards is not a tap of its own.
             _modifierTapPending = false;
-            _pendingClicks[button] = new ClickRecord {
+            ClickRecord click = new ClickRecord {
                 Button = button,
                 X = x,
                 Y = y,
                 Modifiers = KeyboardOperations.GetHeldModifiers()
             };
+            _pendingPresses[button] = (click, timeMs);
         }
 
-        // Returns the finished click or drag, or null when the press was never seen.
-        public static MacroRecord MouseUp(MouseButton button, int x, int y) {
-            if (!_pendingClicks.TryGetValue(button, out ClickRecord click)) return null;
-            _pendingClicks.Remove(button);
+        // Returns the finished click, hold or drag, or null when the press was never seen.
+        public static MacroRecord MouseUp(MouseButton button, int x, int y, uint timeMs) {
+            if (!_pendingPresses.TryGetValue(button, out var press)) return null;
+            _pendingPresses.Remove(button);
+            ClickRecord click = press.Click;
 
             bool isDrag = Math.Abs(x - click.X) > SystemParameters.MinimumHorizontalDragDistance
                 || Math.Abs(y - click.Y) > SystemParameters.MinimumVerticalDragDistance;
-            if (!isDrag) return click;
+            if (!isDrag) {
+                // Event times are tick counts that wrap around; unsigned subtraction still gives the time between them.
+                click.HoldMs = (int)Math.Min(unchecked(timeMs - press.TimeMs), int.MaxValue);
+                return click;
+            }
 
             return new DragRecord {
                 Button = button,

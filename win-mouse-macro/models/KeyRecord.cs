@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace win_mouse_macro.models {
     public class KeyRecord : MacroRecord {
@@ -7,7 +8,7 @@ namespace win_mouse_macro.models {
         // Tells apart keys that share a virtual-key code, such as the arrow keys and the numpad arrows.
         public bool IsExtended { get; set; }
 
-        protected override async Task PlayActionAsync() {
+        protected override async Task PlayActionAsync(CancellationToken cancellation) {
             KeyboardOperations.KeyDown(VirtualKey, ScanCode, IsExtended);
             await Humanizer.HoldAsync();
             KeyboardOperations.KeyUp(VirtualKey, ScanCode, IsExtended);

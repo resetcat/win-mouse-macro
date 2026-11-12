@@ -30,10 +30,10 @@ namespace win_mouse_macro.models {
                     MouseButton button = isLeftButton ? MouseButton.Left : MouseButton.Right;
 
                     if (isButtonDown) {
-                        InputRecorder.MouseDown(button, hookStruct.pt.x, hookStruct.pt.y);
+                        InputRecorder.MouseDown(button, hookStruct.pt.x, hookStruct.pt.y, hookStruct.time);
                     } else {
-                        // A click or drag is only known once the button is released.
-                        MacroRecord record = InputRecorder.MouseUp(button, hookStruct.pt.x, hookStruct.pt.y);
+                        // A click, hold or drag is only known once the button is released.
+                        MacroRecord record = InputRecorder.MouseUp(button, hookStruct.pt.x, hookStruct.pt.y, hookStruct.time);
                         if (record != null) {
                             // Only log and update if recording is active
                             Application.Current.Dispatcher.Invoke(() => {
